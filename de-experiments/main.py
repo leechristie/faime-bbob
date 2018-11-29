@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 DIM = 10
 MAX_ITER = 24
 TOL = 0
-SAMPLES = 1000
+SAMPLES = 7 #1000
 POP_SIZE = 10
 
 
@@ -50,31 +50,28 @@ RECOMBINATION = [0.85, 0.86, 0.87, 0.88, 0.89, 0.9, 0.91, 0.92, 0.93, 0.94]
 
 START = time.time()
 EXPECTED = len(MUTATION) * len(RECOMBINATION) * SAMPLES
-ACTUAL = 0
+PROGRESS = 0
 
 
 def print_progress_up():
     global EXPECTED
-    global ACTUAL
+    global PROGRESS
     global START
     global DIM
     global MAX_ITER
     global TOL
-    global SAMPLES
     global POP_SIZE
-    ACTUAL += 1
+    PROGRESS += 1
     elapsed = time.time() - START
-    rate = elapsed / ACTUAL
-    remaining = EXPECTED - ACTUAL
+    rate = elapsed / PROGRESS
+    remaining = EXPECTED - PROGRESS
     rem_time = remaining * rate
     fin_time = datetime.now() + timedelta(seconds=rem_time)
-    print("Progress : " + str(ACTUAL) + "/" + str(EXPECTED) +
+    print("Progress : " + str(PROGRESS) + "/" + str(EXPECTED) +
           ", expected finish time : " + str(fin_time), end="\n", flush=True)
 
 
 def run_algorithm(index, fid, mutation, recombination, debug, out):
-    global EXPECTED
-    global ACTUAL
     global START
     global DIM
     global MAX_ITER
@@ -94,9 +91,9 @@ def run_algorithm(index, fid, mutation, recombination, debug, out):
                                    recombination=recombination,
                                    mutation=mutation,
                                    popsize=POP_SIZE)
-            ACTUAL = len(fitness_log)
-            EXPECTED = POP_SIZE * DIM * (MAX_ITER + 1)
-            if ACTUAL == EXPECTED:
+            actual_evals = len(fitness_log)
+            expected_evals = POP_SIZE * DIM * (MAX_ITER + 1)
+            if actual_evals == expected_evals:
                 done_correctly = True
                 summary_fitness_log \
                     = best_up_to_generation(
@@ -105,10 +102,10 @@ def run_algorithm(index, fid, mutation, recombination, debug, out):
                     summary_fitness_log)
                 print_progress_up()
             else:
-                print("Sample failed. Calls to f : " + str(ACTUAL)
-                      + ", expected : " + str(EXPECTED))
-                print("Sample failed. Calls to f : " + str(ACTUAL)
-                      + ", expected : " + str(EXPECTED), file=debug,
+                print("Sample failed. Calls to f : " + str(actual_evals)
+                      + ", expected : " + str(expected_evals))
+                print("Sample failed. Calls to f : " + str(actual_evals)
+                      + ", expected : " + str(expected_evals), file=debug,
                       end="\n", flush=True)
                 fitness_log = []
     inverted_summary_fitness_logs \
@@ -126,7 +123,6 @@ def run_algorithm(index, fid, mutation, recombination, debug, out):
 
 def run_experiment(fid):
     global EXPECTED
-    global ACTUAL
     global START
     global MUTATION
     global RECOMBINATION
