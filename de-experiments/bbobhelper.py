@@ -35,7 +35,7 @@ def getbenchmark(fid, dim, instance=None, zerox=False, zerof=True, param=None):
 
 
 if __name__ == '__main__':
-    dim = 4
+    DIM = 4
     for i in range(1, 24+1):
-        f = getbenchmark(i, dim)
+        f = getbenchmark(i, DIM)
         print(f.__name__, "with", f.fopt, "at", f.xopt)

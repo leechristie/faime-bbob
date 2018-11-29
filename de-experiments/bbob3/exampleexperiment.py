@@ -72,7 +72,7 @@ t0 = time.time()
 np.random.seed(int(t0))
 
 f = fgeneric.LoggingFunction(datapath, **opts)
-for dim in dimensions:  # small dimensions first, for CPU reasons
+for DIM in dimensions:  # small dimensions first, for CPU reasons
     for fun_id in function_ids:
         for iinstance in instances:
             f.setfun(*bbobbenchmarks.instantiate(fun_id, iinstance=iinstance))
@@ -81,7 +81,7 @@ for dim in dimensions:  # small dimensions first, for CPU reasons
             for restarts in range(maxrestarts + 1):
                 if restarts > 0:
                     f.restart('independent restart')  # additional info
-                run_optimizer(f.evalfun, dim,  eval(maxfunevals) - f.evaluations,
+                run_optimizer(f.evalfun, DIM, eval(maxfunevals) - f.evaluations,
                               f.ftarget)
                 if (f.fbest < f.ftarget
                     or f.evaluations + eval(minfunevals) > eval(maxfunevals)):
@@ -91,8 +91,8 @@ for dim in dimensions:  # small dimensions first, for CPU reasons
 
             print(('  f%d in %d-D, instance %d: FEs=%d with %d restarts, '
                   'fbest-ftarget=%.4e, elapsed time [h]: %.2f'
-                  % (fun_id, dim, iinstance, f.evaluations, restarts,
-                     f.fbest - f.ftarget, (time.time()-t0)/60./60.)))
+                  % (fun_id, DIM, iinstance, f.evaluations, restarts,
+                     f.fbest - f.ftarget, (time.time()-t0) / 60. / 60.)))
 
         print(('      date and time: %s' % (time.asctime())))
-    print(('---- dimension %d-D done ----' % dim))
+    print(('---- dimension %d-D done ----' % DIM))

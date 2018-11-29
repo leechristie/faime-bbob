@@ -4,12 +4,11 @@ from scipy.optimize import differential_evolution
 import time
 from datetime import datetime, timedelta
 
-dim = 10
-
-maxiter = 24
-tol = 0
-samples = 1000
-popsize = 10
+DIM = 10
+MAX_ITER = 24
+TOL = 0
+SAMPLES = 1000
+POP_SIZE = 10
 
 
 def logging_wrapper(func, flog):
@@ -45,100 +44,121 @@ def invert(x):
     return rv
 
 
-def print_lock(text):
-    print(text, end="\n", flush=True)
+MUTATION = [0.25, 0.26, 0.27, 0.28, 0.29, 0.3, 0.31, 0.32, 0.33, 0.34]
+RECOMBINATION = [0.85, 0.86, 0.87, 0.88, 0.89, 0.9, 0.91, 0.92, 0.93, 0.94]
 
 
-start = time.time()
-expected = len([0.25, 0.26, 0.27, 0.28, 0.29, 0.3, 0.31, 0.32, 0.33, 0.34])\
-           * len([0.85, 0.86, 0.87, 0.88, 0.89, 0.9, 0.91, 0.92, 0.93, 0.94])\
-           * samples
-actual = 0
+START = time.time()
+EXPECTED = len(MUTATION) * len(RECOMBINATION) * SAMPLES
+ACTUAL = 0
 
 
 def print_progress_up():
-    global expected
-    global actual
-    global start
-    actual += 1
-    elapsed = time.time() - start
-    rate = elapsed / actual
-    remaining = expected - actual
+    global EXPECTED
+    global ACTUAL
+    global START
+    global DIM
+    global MAX_ITER
+    global TOL
+    global SAMPLES
+    global POP_SIZE
+    ACTUAL += 1
+    elapsed = time.time() - START
+    rate = elapsed / ACTUAL
+    remaining = EXPECTED - ACTUAL
     rem_time = remaining * rate
     fin_time = datetime.now() + timedelta(seconds=rem_time)
-    print("Progress : " + str(actual) + "/" + str(expected) +
+    print("Progress : " + str(ACTUAL) + "/" + str(EXPECTED) +
           ", expected finish time : " + str(fin_time), end="\n", flush=True)
 
 
-class myThread():
-    def __init__(self, fid):
-        self.fid = fid
-    def run(self):
-        fid = self.fid
-        tasks = []
-        index = 0
-        for mutation in [0.25, 0.26, 0.27, 0.28, 0.29,
-                         0.3, 0.31, 0.32, 0.33, 0.34]:
-            for recombination in [0.85, 0.86, 0.87, 0.88, 0.89,
-                                  0.9, 0.91, 0.92, 0.93, 0.94]:
-                tasks.append(tuple([index, fid, mutation, recombination]))
-                index += 1
-        fidstr = str(fid)
-        if fid < 10:
-            fidstr = "0" + str(fid)
-        with open("result/DEBUG_F" + fidstr + ".txt", "w") as debug:
-            with open("result/output_F" + fidstr + ".csv", "w") as out:
-                print("Function", "Mutation", "Recombination", "Generations",
-                      "Meta Fitness (mean)", "Meta Fitness (stdev)", sep=",",
-                      end="\n", file=out, flush=True)
-                for task in tasks:
-                    index, fid, mutation, recombination = task
-                    summary_fitness_logs = []
-                    for sample in range(samples):
-                        fitness_log = []
-                        doneCorrectly = False
-                        while not doneCorrectly:
-                            f = logging_wrapper(getbenchmark(fid, dim),
-                                                fitness_log)
-                            result = differential_evolution(f,
-                                 [(f.xmin, f.xmax)] * dim,
-                                 maxiter=maxiter, polish=False,
-                                 tol=tol, recombination=recombination,
-                                 mutation=mutation, popsize=popsize)
-                            actual = len(fitness_log)
-                            expected = popsize * dim * (maxiter+1)
-                            if actual == expected:
-                                doneCorrectly = True
-                                summary_fitness_log \
-                                    = best_up_to_generation(
-                                    fitness_log, popsize * dim)
-                                summary_fitness_logs.append(
-                                    summary_fitness_log)
-                                print_progress_up()
-                            else:
-                                print_lock("Sample failed. Calls to f : "
-                                           + str(actual) + ", expected : "
-                                           + str(expected))
-                                print("Sample failed. Calls to f : "
-                                      + str(actual) + ", expected : "
-                                      + str(expected), file=debug,
-                                      end="\n", flush=True)
-                                fitness_log = []
-                    inverted_summary_fitness_logs\
-                        = invert(summary_fitness_logs)
-                    generation_limit = 1
-                    for fitnesses in inverted_summary_fitness_logs:
-                        n = len(fitnesses)
-                        mean = np.mean(fitnesses)
-                        std = np.std(fitnesses, ddof=1)
-                        print(fid, mutation, recombination, generation_limit,
-                              mean, std, sep=",", end="\n", file=out,
-                              flush=True)
-                        generation_limit += 1
+def run_algorithm(index, fid, mutation, recombination, debug, out):
+    global EXPECTED
+    global ACTUAL
+    global START
+    global DIM
+    global MAX_ITER
+    global TOL
+    global SAMPLES
+    global POP_SIZE
+    summary_fitness_logs = []
+    for sample in range(SAMPLES):
+        fitness_log = []
+        done_correctly = False
+        while not done_correctly:
+            f = logging_wrapper(getbenchmark(fid, DIM),
+                                fitness_log)
+            differential_evolution(f, [(f.xmin, f.xmax)] * DIM,
+                                   maxiter=MAX_ITER, polish=False,
+                                   tol=TOL,
+                                   recombination=recombination,
+                                   mutation=mutation,
+                                   popsize=POP_SIZE)
+            ACTUAL = len(fitness_log)
+            EXPECTED = POP_SIZE * DIM * (MAX_ITER + 1)
+            if ACTUAL == EXPECTED:
+                done_correctly = True
+                summary_fitness_log \
+                    = best_up_to_generation(
+                    fitness_log, POP_SIZE * DIM)
+                summary_fitness_logs.append(
+                    summary_fitness_log)
+                print_progress_up()
+            else:
+                print("Sample failed. Calls to f : " + str(ACTUAL)
+                      + ", expected : " + str(EXPECTED))
+                print("Sample failed. Calls to f : " + str(ACTUAL)
+                      + ", expected : " + str(EXPECTED), file=debug,
+                      end="\n", flush=True)
+                fitness_log = []
+    inverted_summary_fitness_logs \
+        = invert(summary_fitness_logs)
+    generation_limit = 1
+    for fitnesses in inverted_summary_fitness_logs:
+        n = len(fitnesses)
+        mean = np.mean(fitnesses)
+        std = np.std(fitnesses, ddof=1)
+        print(fid, mutation, recombination, generation_limit,
+              mean, std, sep=",", end="\n", file=out,
+              flush=True)
+        generation_limit += 1
 
 
-FID = int(input("FID: "))
-t = myThread(FID)
-t.run()
+def run_experiment(fid):
+    global EXPECTED
+    global ACTUAL
+    global START
+    global MUTATION
+    global RECOMBINATION
+    global DIM
+    global MAX_ITER
+    global TOL
+    global SAMPLES
+    global POP_SIZE
+    tasks = []
+    index = 0
+    for mutation in MUTATION:
+        for recombination in RECOMBINATION:
+            tasks.append((index, fid, mutation, recombination))
+            index += 1
+    fid_str = str(fid)
+    if fid < 10:
+        fid_str = "0" + str(fid)
+    with open("result/DEBUG_F" + fid_str + ".txt", "w") as debug:
+        with open("result/output_F" + fid_str + ".csv", "w") as out:
+            print("Function", "Mutation", "Recombination", "Generations",
+                  "Meta Fitness (mean)", "Meta Fitness (stdev)", sep=",",
+                  end="\n", file=out, flush=True)
+            for task in tasks:
+                index, fid, mutation, recombination = task
+                run_algorithm(index, fid, mutation, recombination, debug, out)
 
-print("DONE.")
+
+def main():
+    fid = int(input("fid: "))
+    run_experiment(fid)
+    print("DONE.")
+
+
+if __name__ == '__main__':
+    main()

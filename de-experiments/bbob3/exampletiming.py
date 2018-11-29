@@ -53,15 +53,15 @@ def PURE_RANDOM_SEARCH(fun, x, maxfunevals, ftarget):
 timings = []
 runs = []
 dims = []
-for dim in (2, 3, 5, 10, 20, 40, 80, 160):
+for DIM in (2, 3, 5, 10, 20, 40, 80, 160):
     nbrun = 0
     f = fgeneric.LoggingFunction('tmp').setfun(*bn.instantiate(8, 1))
     t0 = time.time()
     while time.time() - t0 < 30: # at least 30 seconds
-        run_optimizer(f.evalfun, dim, eval(MAX_FUN_EVALS), f.ftarget)  # adjust maxfunevals
+        run_optimizer(f.evalfun, DIM, eval(MAX_FUN_EVALS), f.ftarget)  # adjust maxfunevals
         nbrun = nbrun + 1
     timings.append((time.time() - t0) / f.evaluations)
-    dims.append(dim)    # not really needed
+    dims.append(DIM)    # not really needed
     runs.append(nbrun)  # not really needed
     f.finalizerun()
     print('\nDimensions:', end=' ')
